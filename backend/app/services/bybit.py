@@ -43,7 +43,7 @@ class BybitService:
             if category == 'spot' and item.get('status') not in {'Trading', None}:
                 continue
             symbols.append(symbol)
-        return sorted(symbols)[:200] or self._fallback(category)
+        return sorted(symbols) or self._fallback(category)
 
     async def fetch_ticker(self, symbol: str, market_type: str) -> TickerQuote:
         category = 'linear' if market_type == 'futures' else 'spot'

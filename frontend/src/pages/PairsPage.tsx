@@ -30,7 +30,7 @@ export default function PairsPage() {
       <div className="card-grid two-columns">
         <Card title="Спот-пары">
           <div className="list-box">
-            {spotPairs.slice(0, 60).map((item) => (
+            {spotPairs.map((item) => (
               <label key={item.symbol} className="checkbox-row">
                 <input type="checkbox" checked={selections.spot_symbols.includes(item.symbol)} onChange={() => setSelections((prev) => ({ ...prev, spot_symbols: toggleValue(prev.spot_symbols, item.symbol) }))} />
                 <span>{item.symbol}</span>
@@ -40,7 +40,7 @@ export default function PairsPage() {
         </Card>
         <Card title="Фьючерсные пары">
           <div className="list-box">
-            {futuresPairs.slice(0, 60).map((item) => (
+            {futuresPairs.map((item) => (
               <label key={item.symbol} className="checkbox-row">
                 <input type="checkbox" checked={selections.futures_symbols.includes(item.symbol)} onChange={() => setSelections((prev) => ({ ...prev, futures_symbols: toggleValue(prev.futures_symbols, item.symbol) }))} />
                 <span>{item.symbol}</span>
