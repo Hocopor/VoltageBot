@@ -1,0 +1,7 @@
+tunnel: voltage
+credentials-file: /etc/cloudflared/voltage.json
+
+ingress:
+  - hostname: your-subdomain.example.com
+    service: http://web:80
+  - service: http_status:404

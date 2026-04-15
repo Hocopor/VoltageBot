@@ -1,0 +1,44 @@
+services:
+  postgres:
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-voltage}
+      POSTGRES_USER: ${POSTGRES_USER:-voltage}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-voltage_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./deploy/backups:/backups
+
+  redis:
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+
+  api:
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://voltage:voltage_password@postgres:5432/voltage}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      BACKUP_ROOT: ${BACKUP_ROOT:-/data/backups}
+      RELEASE_ROOT: ${RELEASE_ROOT:-/data/releases}
+    volumes:
+      - codex_data:${CODEX_SESSION_DIR:-/data/codex}
+      - ./deploy/backups:${BACKUP_ROOT:-/data/backups}
+      - ./deploy/releases:${RELEASE_ROOT:-/data/releases}
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz')\""]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+    ports:
+      - "127.0.0.1:8000:8000"
+
+  web:
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:80"
+
+  cloudflared:
+    restart: unless-stopped
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}

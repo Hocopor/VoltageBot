@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "voltage-backend"
+version = "0.2.0"
+description = "Backend for VOLTAGE trading platform"
+requires-python = ">=3.13"
+dependencies = [
+  "fastapi>=0.115.0",
+  "uvicorn[standard]>=0.30.0",
+  "sqlalchemy>=2.0.36",
+  "psycopg[binary]>=3.2.0",
+  "pydantic-settings>=2.6.0",
+  "httpx>=0.28.0",
+  "python-multipart>=0.0.12",
+]
+
+[tool.setuptools.packages.find]
+include = ["app*"]

@@ -1,0 +1,16 @@
+.env
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+.venv/
+node_modules/
+dist/
+*.egg-info/
+.postgres-data/
+
+deploy/backups/
+deploy/releases/
+исходники/
+исходники
