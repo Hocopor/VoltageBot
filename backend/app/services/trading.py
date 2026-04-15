@@ -51,7 +51,7 @@ class TradingService:
         if state.kill_switch_armed:
             raise TradingError('Kill switch is armed; execution is blocked')
         if runtime.mode == 'historical':
-            raise TradingError('Historical mode does not accept live execution requests')
+            raise TradingError('Исторический режим не принимает запросы на живое исполнение.')
         market_type = payload.market_type
         side = payload.side.lower()
         if market_type == 'spot' and side != 'buy':
@@ -188,7 +188,7 @@ class TradingService:
     def close_position(self, position_id: int, exit_price: float | None = None, reason: str = 'manual-close') -> dict:
         position = self.db.get(Position, position_id)
         if not position or position.status != 'open':
-            raise TradingError('Open position not found')
+            raise TradingError('Открытая позиция не найдена.')
         current_price = exit_price if exit_price is not None else (position.mark_price or position.avg_entry_price)
 
         if position.mode == 'live':
@@ -782,7 +782,7 @@ class TradingService:
     def _validate_selected_symbol(self, symbol: str, market_type: str) -> None:
         selected = list(self.db.scalars(select(PairSelection.symbol).where(PairSelection.market_type == market_type, PairSelection.selected.is_(True))).all())
         if selected and symbol not in selected:
-            raise TradingError(f'Symbol {symbol} is not enabled in {market_type} pair settings')
+            raise TradingError(f'Инструмент {symbol} не включён в настройках пар для {market_type}')
 
     def _default_stop(self, entry_price: float, symbol: str, side: str) -> float:
         is_major = symbol.startswith('BTC') or symbol.startswith('ETH')

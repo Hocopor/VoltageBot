@@ -30,7 +30,7 @@ def list_runs(db: Session = Depends(db_session)) -> list[BacktestRunRead]:
 def get_run(run_id: int, db: Session = Depends(db_session)) -> BacktestRunDetail:
     run, trades = BacktestService(db).get_run(run_id)
     if run is None:
-        raise HTTPException(status_code=404, detail='Backtest run not found')
+        raise HTTPException(status_code=404, detail='Прогон бэктеста не найден.')
     return BacktestRunDetail(
         **BacktestRunRead.model_validate(run, from_attributes=True).model_dump(),
         trades=[BacktestTradeRead.model_validate(item, from_attributes=True) for item in trades],

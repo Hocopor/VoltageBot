@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request, Response
 
 from app.schemas.auth import (
     CodexBrowserCompleteRequest,
@@ -7,11 +7,49 @@ from app.schemas.auth import (
     DeepSeekStatusRead,
     DeepSeekTestRead,
     DeepSeekTestRequest,
+    LoginRequest,
+    SessionStatusRead,
 )
+from app.services.admin_auth import AdminAuthError, AdminAuthService
 from app.services.codex_auth import CodexAuthError, CodexAuthService
 from app.services.deepseek import DeepSeekClient
 
 router = APIRouter()
+
+
+@router.get('/session', response_model=SessionStatusRead)
+def auth_session(request: Request) -> SessionStatusRead:
+    session = AdminAuthService().read_session(request.cookies.get(AdminAuthService().session_cookie_name()))
+    if not session:
+        return SessionStatusRead(authenticated=False, message='Требуется вход в систему.')
+    return SessionStatusRead(**session, message='Сессия активна.')
+
+
+@router.post('/login', response_model=SessionStatusRead)
+def login(payload: LoginRequest, response: Response) -> SessionStatusRead:
+    service = AdminAuthService()
+    try:
+        token = service.login(payload.username, payload.password)
+    except AdminAuthError as exc:
+        raise HTTPException(status_code=401, detail=str(exc)) from exc
+    session = service.read_session(token)
+    response.set_cookie(
+        key=service.session_cookie_name(),
+        value=token,
+        httponly=True,
+        secure=service.cookie_is_secure(),
+        samesite='lax',
+        max_age=service.settings.auth_session_ttl_hours * 3600,
+        path='/',
+    )
+    return SessionStatusRead(**(session or {'authenticated': True, 'username': payload.username}), message='Вход выполнен.')
+
+
+@router.post('/logout', response_model=SessionStatusRead)
+def logout(response: Response) -> SessionStatusRead:
+    service = AdminAuthService()
+    response.delete_cookie(key=service.session_cookie_name(), path='/')
+    return SessionStatusRead(authenticated=False, message='Вы вышли из системы.')
 
 
 @router.get('/codex/status', response_model=CodexStatusRead)

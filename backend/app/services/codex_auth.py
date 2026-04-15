@@ -28,7 +28,7 @@ class CodexAuthService:
             return {
                 'connected': False,
                 'mode': self.settings.codex_login_mode,
-                'message': 'Codex session is not connected yet.',
+                'message': 'Сессия Codex ещё не подключена.',
                 'pending_login': bool(pending),
                 'pending_login_id': pending.get('login_id') if pending else None,
                 'expires_at': pending.get('expires_at') if pending else None,
@@ -49,7 +49,7 @@ class CodexAuthService:
             'mode': self.settings.codex_login_mode,
             'auth_url': f'/api/v1/auth/codex/browser/callback?login_id={login_id}&account_label=browser-linked-user',
             'callback_path': f'/api/v1/auth/codex/browser/callback?login_id={login_id}&account_label=browser-linked-user',
-            'message': 'Open the callback path in a browser session after Codex browser login completes. The resulting session will be persisted locally.',
+            'message': 'Откройте callback-путь в браузере после завершения входа Codex. Полученная сессия будет сохранена локально.',
         }
         self.pending_file.write_text(json.dumps(payload, indent=2), encoding='utf-8')
         return payload
@@ -66,7 +66,7 @@ class CodexAuthService:
             'external_user_id': external_user_id,
             'connected_at': now.isoformat(),
             'last_sync_at': now.isoformat(),
-            'message': 'Codex browser session persisted locally and will survive restarts while the data volume remains intact.',
+            'message': 'Сессия Codex сохранена локально и переживёт перезапуск, пока сохраняется data-volume.',
         }
         self.session_file.write_text(json.dumps(payload, indent=2), encoding='utf-8')
         self._clear_pending(pending)
@@ -84,7 +84,7 @@ class CodexAuthService:
         return {
             'connected': False,
             'mode': self.settings.codex_login_mode,
-            'message': 'Codex session removed from local persistence.',
+            'message': 'Сессия Codex удалена из локального хранилища.',
             'pending_login': False,
         }
 
@@ -96,7 +96,7 @@ class CodexAuthService:
             'account_label': account_label,
             'connected_at': datetime.now(timezone.utc).isoformat(),
             'last_sync_at': datetime.now(timezone.utc).isoformat(),
-            'message': 'Placeholder session persisted. Replace with browser callback flow or CLI session sync in production.',
+            'message': 'Тестовая сессия сохранена. В production замените её на реальный браузерный вход или синхронизацию CLI-сессии.',
         }
         self.session_file.write_text(json.dumps(payload, indent=2), encoding='utf-8')
         return payload
@@ -109,9 +109,9 @@ class CodexAuthService:
     def _require_pending(self, login_id: str) -> dict[str, Any]:
         pending = self._read_json(self.pending_file)
         if not pending:
-            raise CodexAuthError('No pending Codex browser login found')
+            raise CodexAuthError('Ожидаемый браузерный вход Codex не найден.')
         if pending.get('login_id') != login_id:
-            raise CodexAuthError('Codex login_id does not match pending browser login')
+            raise CodexAuthError('login_id Codex не совпадает с ожидающим браузерным входом.')
         expires_at = pending.get('expires_at')
         if expires_at:
             expires = datetime.fromisoformat(expires_at)
@@ -119,7 +119,7 @@ class CodexAuthService:
                 expires = expires.replace(tzinfo=timezone.utc)
             if expires < datetime.now(timezone.utc):
                 self._clear_pending(pending)
-                raise CodexAuthError('Pending Codex browser login expired')
+                raise CodexAuthError('Срок действия ожидающего браузерного входа Codex истёк.')
         return pending
 
     def _clear_pending(self, pending: dict[str, Any] | None = None) -> None:

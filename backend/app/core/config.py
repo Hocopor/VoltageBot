@@ -13,6 +13,10 @@ class Settings(BaseSettings):
     backend_port: int = 8000
     secret_key: str = 'change-me'
     allowed_origins: list[str] = ['http://localhost:8080', 'http://localhost']
+    auth_login: str = ''
+    auth_password_hash: str = ''
+    auth_cookie_name: str = 'voltage_session'
+    auth_session_ttl_hours: int = 720
 
     database_url: str = 'postgresql+psycopg://voltage:voltage_password@postgres:5432/voltage'
     redis_url: str = 'redis://redis:6379/0'

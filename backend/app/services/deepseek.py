@@ -15,7 +15,7 @@ class DeepSeekClient:
             'configured': configured,
             'model': self.settings.deepseek_model,
             'base_url': self.settings.deepseek_base_url,
-            'message': 'DeepSeek API key configured.' if configured else 'DEEPSEEK_API_KEY is not configured.',
+            'message': 'Ключ DeepSeek настроен.' if configured else 'Переменная DEEPSEEK_API_KEY не настроена.',
         }
 
     async def chat(self, messages: list[dict]) -> dict:
@@ -54,7 +54,7 @@ class DeepSeekClient:
             return {
                 'status': 'disabled',
                 'model': self.settings.deepseek_model,
-                'text': 'DeepSeek API key is not configured. Fallback mode is active.',
+                'text': 'Ключ DeepSeek не настроен. Активен резервный режим.',
             }
         choices = payload.get('choices') if isinstance(payload, dict) else None
         if choices:
@@ -68,5 +68,5 @@ class DeepSeekClient:
         return {
             'status': 'empty',
             'model': self.settings.deepseek_model,
-            'text': 'DeepSeek returned no content.',
+            'text': 'DeepSeek не вернул содержимое.',
         }

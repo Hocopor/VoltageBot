@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api'
 import { Card, Page } from '../components'
+import { formatDateTime, onOff, t, yesNo } from '../format'
 import type { BotConfig, BotCycleResult, BotRun, SystemEvent } from '../types'
 
 const defaultConfig: BotConfig = {
@@ -42,7 +43,7 @@ export default function BotPage() {
     try {
       const saved = await api.updateBotConfig(config)
       setConfig(saved)
-      setMessage('Bot config saved')
+      setMessage('Конфигурация бота сохранена.')
     } catch (error) {
       setMessage(error instanceof Error ? error.message : String(error))
     }
@@ -52,7 +53,7 @@ export default function BotPage() {
     try {
       const result = await api.runBotCycle()
       setLastResult(result)
-      setMessage(`Cycle #${result.run_id} ${result.status}: executed ${result.executed_total}`)
+      setMessage(`Цикл бота #${result.run_id} выполнен: ${result.summary}`)
       await load()
     } catch (error) {
       setMessage(error instanceof Error ? error.message : String(error))
@@ -60,81 +61,59 @@ export default function BotPage() {
   }
 
   return (
-    <Page title="Bot runtime" subtitle="Automatic strategy scanning, execution controls, cycle history and system events.">
+    <Page title="Бот" subtitle="Конфигурация автоторговли, ручной запуск циклов, журнал запусков и системные события.">
       <div className="card-grid two-columns">
-        <Card title="Bot controls">
-          <label className="checkbox-row">
-            <input type="checkbox" checked={config.enabled} onChange={(e) => setConfig({ ...config, enabled: e.target.checked })} />
-            <span>Enable automatic cycles</span>
-          </label>
-          <label className="checkbox-row">
-            <input type="checkbox" checked={config.auto_execute} onChange={(e) => setConfig({ ...config, auto_execute: e.target.checked })} />
-            <span>Auto-execute allowed signals</span>
-          </label>
-          <label className="checkbox-row">
-            <input type="checkbox" checked={config.live_execution_allowed} onChange={(e) => setConfig({ ...config, live_execution_allowed: e.target.checked })} />
-            <span>Allow live execution when runtime mode = live</span>
-          </label>
-          <label className="field"><span>Scan interval, seconds</span><input type="number" value={config.scan_interval_seconds} onChange={(e) => setConfig({ ...config, scan_interval_seconds: Number(e.target.value) })} /></label>
-          <label className="field"><span>Strategy timeframe</span><select value={config.strategy_timeframe} onChange={(e) => setConfig({ ...config, strategy_timeframe: e.target.value as BotConfig['strategy_timeframe'] })}><option value="15M">15M</option><option value="1H">1H</option><option value="4H">4H</option><option value="1D">1D</option></select></label>
-          <label className="field"><span>Strategy candles</span><input type="number" value={config.strategy_candles} onChange={(e) => setConfig({ ...config, strategy_candles: Number(e.target.value) })} /></label>
-          <label className="field"><span>Risk percent</span><input type="number" step="0.001" value={config.risk_percent} onChange={(e) => setConfig({ ...config, risk_percent: Number(e.target.value) })} /></label>
-          <label className="field"><span>Max new positions per cycle</span><input type="number" value={config.max_new_positions_per_cycle} onChange={(e) => setConfig({ ...config, max_new_positions_per_cycle: Number(e.target.value) })} /></label>
-          <label className="field"><span>Notes</span><textarea rows={4} value={config.notes ?? ''} onChange={(e) => setConfig({ ...config, notes: e.target.value })} /></label>
-          <div className="action-row wrap">
-            <button onClick={save}>Save bot config</button>
-            <button onClick={runCycle}>Run cycle now</button>
+        <Card title="Конфигурация бота">
+          <label className="checkbox-row"><input type="checkbox" checked={config.enabled} onChange={(e) => setConfig({ ...config, enabled: e.target.checked })} /><span>Включить бота</span></label>
+          <label className="checkbox-row"><input type="checkbox" checked={config.auto_execute} onChange={(e) => setConfig({ ...config, auto_execute: e.target.checked })} /><span>Автоисполнение</span></label>
+          <label className="checkbox-row"><input type="checkbox" checked={config.live_execution_allowed} onChange={(e) => setConfig({ ...config, live_execution_allowed: e.target.checked })} /><span>Разрешить live-исполнение</span></label>
+          <label className="field"><span>Интервал сканирования, сек</span><input type="number" value={config.scan_interval_seconds} onChange={(e) => setConfig({ ...config, scan_interval_seconds: Number(e.target.value) })} /></label>
+          <label className="field"><span>Таймфрейм стратегии</span><select value={config.strategy_timeframe} onChange={(e) => setConfig({ ...config, strategy_timeframe: e.target.value as BotConfig['strategy_timeframe'] })}><option value="15M">15M</option><option value="1H">1H</option><option value="4H">4H</option><option value="1D">1D</option></select></label>
+          <label className="field"><span>Свечей</span><input type="number" value={config.strategy_candles} onChange={(e) => setConfig({ ...config, strategy_candles: Number(e.target.value) })} /></label>
+          <label className="field"><span>Риск на сделку</span><input type="number" step="0.01" value={config.risk_percent} onChange={(e) => setConfig({ ...config, risk_percent: Number(e.target.value) })} /></label>
+          <label className="field"><span>Макс. новых позиций за цикл</span><input type="number" value={config.max_new_positions_per_cycle} onChange={(e) => setConfig({ ...config, max_new_positions_per_cycle: Number(e.target.value) })} /></label>
+          <label className="field"><span>Заметки</span><textarea rows={3} value={config.notes ?? ''} onChange={(e) => setConfig({ ...config, notes: e.target.value })} /></label>
+          <div className="action-row">
+            <button onClick={save}>Сохранить</button>
+            <button onClick={runCycle}>Запустить цикл сейчас</button>
           </div>
           {message ? <p className="message-block">{message}</p> : null}
         </Card>
-        <Card title="Current status">
-          <p><strong>Status:</strong> {config.enabled ? 'enabled' : 'disabled'}</p>
-          <p><strong>Last cycle status:</strong> {config.last_cycle_status ?? 'n/a'}</p>
-          <p><strong>Last started:</strong> {config.last_cycle_started_at ?? 'n/a'}</p>
-          <p><strong>Last finished:</strong> {config.last_cycle_finished_at ?? 'n/a'}</p>
-          <p><strong>Summary:</strong> {config.last_cycle_summary ?? 'n/a'}</p>
-          <p><strong>Last error:</strong> {config.last_error ?? 'none'}</p>
-          {lastResult ? <p className="message-block">Manual run #{lastResult.run_id}: {lastResult.summary}</p> : null}
+        <Card title="Последний цикл">
+          <p>Включён: {onOff(config.enabled)}</p>
+          <p>Автоисполнение: {onOff(config.auto_execute)}</p>
+          <p>Live разрешён: {yesNo(config.live_execution_allowed)}</p>
+          <p>Последний статус: {t(config.last_cycle_status)}</p>
+          <p>Старт: {formatDateTime(config.last_cycle_started_at)}</p>
+          <p>Финиш: {formatDateTime(config.last_cycle_finished_at)}</p>
+          <p>{config.last_cycle_summary ?? 'Сводка по циклу пока отсутствует.'}</p>
+          {config.last_error ? <p className="message-block">{config.last_error}</p> : null}
+          {lastResult ? <p className="message-block">Последний ручной запуск: {lastResult.summary}</p> : null}
         </Card>
       </div>
       <div className="card-grid two-columns">
-        <Card title="Cycle history">
+        <Card title="Запуски бота">
           <div className="table-wrap">
             <table>
-              <thead>
-                <tr><th>ID</th><th>Mode</th><th>Trigger</th><th>Status</th><th>Scanned</th><th>Allowed</th><th>Executed</th><th>Summary</th></tr>
-              </thead>
+              <thead><tr><th>ID</th><th>Режим</th><th>Статус</th><th>Триггер</th><th>Сканировано</th><th>Разрешено</th><th>Исполнено</th><th>Ошибок</th><th>Создано</th></tr></thead>
               <tbody>
                 {runs.map((run) => (
                   <tr key={run.id}>
-                    <td>{run.id}</td>
-                    <td>{run.mode}</td>
-                    <td>{run.trigger_type}</td>
-                    <td>{run.status}</td>
-                    <td>{run.scanned_pairs}</td>
-                    <td>{run.allowed_total}</td>
-                    <td>{run.executed_total}</td>
-                    <td>{run.summary ?? '-'}</td>
+                    <td>{run.id}</td><td>{t(run.mode)}</td><td>{t(run.status)}</td><td>{t(run.trigger_type)}</td><td>{run.scanned_pairs}</td><td>{run.allowed_total}</td><td>{run.executed_total}</td><td>{run.errors_total}</td><td>{formatDateTime(run.created_at)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         </Card>
-        <Card title="System events">
+        <Card title="Системные события">
           <div className="table-wrap">
             <table>
-              <thead>
-                <tr><th>Time</th><th>Level</th><th>Source</th><th>Type</th><th>Message</th></tr>
-              </thead>
+              <thead><tr><th>ID</th><th>Уровень</th><th>Источник</th><th>Тип</th><th>Сообщение</th><th>Создано</th></tr></thead>
               <tbody>
                 {events.map((event) => (
                   <tr key={event.id}>
-                    <td>{new Date(event.created_at).toLocaleString()}</td>
-                    <td>{event.level}</td>
-                    <td>{event.source}</td>
-                    <td>{event.event_type}</td>
-                    <td>{event.message}</td>
+                    <td>{event.id}</td><td>{t(event.level)}</td><td>{event.source}</td><td>{t(event.event_type)}</td><td>{event.message}</td><td>{formatDateTime(event.created_at)}</td>
                   </tr>
                 ))}
               </tbody>

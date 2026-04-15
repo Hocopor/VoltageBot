@@ -24,7 +24,7 @@ export function Card({ title, children }: PropsWithChildren<{ title: string }>) 
 }
 
 export function MiniLineChart({ points, height = 140 }: { points: number[]; height?: number }) {
-  if (!points.length) return <p>No chart data yet.</p>
+  if (!points.length) return <p>Данных для графика пока нет.</p>
   const min = Math.min(...points)
   const max = Math.max(...points)
   const width = 420

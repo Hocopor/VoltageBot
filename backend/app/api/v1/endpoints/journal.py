@@ -24,7 +24,7 @@ def summary(db: Session = Depends(db_session)) -> JournalSummaryRead:
 async def generate_review(entry_id: int, db: Session = Depends(db_session)) -> JournalEntryRead:
     entry = db.get(JournalEntry, entry_id)
     if entry is None:
-        raise HTTPException(status_code=404, detail='Journal entry not found')
+        raise HTTPException(status_code=404, detail='Запись дневника не найдена.')
     status, text = await AIReviewService().review_journal_entry(entry)
     entry.ai_review_status = status
     entry.ai_review_text = text

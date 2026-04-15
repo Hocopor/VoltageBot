@@ -5,7 +5,7 @@ COPY package.json package-lock.json ./
 RUN npm config set registry https://registry.npmjs.org/ \
  && npm config set fund false \
  && npm config set audit false \
- && npm ci
+ && npm install
 
 COPY . .
 RUN npm run build

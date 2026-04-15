@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api'
 import { Card, Page } from '../components'
+import { t } from '../format'
 import type { BacktestRun, BacktestRunDetail, BacktestRunRequest, PairSelections } from '../types'
 
 const initialForm: BacktestRunRequest = {
@@ -34,7 +35,7 @@ export default function BacktestsPage() {
   const run = async () => {
     try {
       const created = await api.runBacktest(form)
-      setMessage(`Backtest #${created.id} completed`)
+      setMessage(`Бэктест #${created.id} завершён.`)
       await load()
       setSelectedRun(await api.getBacktestRun(created.id))
     } catch (error) {
@@ -47,36 +48,36 @@ export default function BacktestsPage() {
   }
 
   return (
-    <Page title="Historical backtests" subtitle="Run VOLTAGE on historical candles with separate historical balance and metrics.">
+    <Page title="Исторические бэктесты" subtitle="Прогоняйте VOLTAGE на исторических свечах с отдельным балансом и статистикой.">
       <div className="card-grid two-columns">
-        <Card title="Run backtest">
-          <label className="field"><span>Market</span><select value={form.market_type} onChange={(e) => setForm({ ...form, market_type: e.target.value as 'spot' | 'futures' })}><option value="spot">spot</option><option value="futures">futures</option></select></label>
-          <label className="field"><span>Symbol</span><select value={form.symbol} onChange={(e) => setForm({ ...form, symbol: e.target.value })}>{(availableSymbols.length ? availableSymbols : ['BTCUSDT']).map((symbol) => <option key={symbol} value={symbol}>{symbol}</option>)}</select></label>
-          <label className="field"><span>Timeframe</span><select value={form.timeframe} onChange={(e) => setForm({ ...form, timeframe: e.target.value })}><option value="15M">15M</option><option value="1H">1H</option><option value="4H">4H</option><option value="1D">1D</option></select></label>
-          <label className="field"><span>Candles</span><input type="number" value={form.candles} onChange={(e) => setForm({ ...form, candles: Number(e.target.value) })} /></label>
-          <label className="field"><span>Start balance</span><input type="number" value={form.start_balance} onChange={(e) => setForm({ ...form, start_balance: Number(e.target.value) })} /></label>
-          <label className="field"><span>Side policy</span><select value={form.side_policy} onChange={(e) => setForm({ ...form, side_policy: e.target.value as 'both' | 'long_only' | 'short_only' })}><option value="both">both</option><option value="long_only">long_only</option><option value="short_only">short_only</option></select></label>
-          <div className="action-row"><button onClick={run}>Run backtest</button></div>
+        <Card title="Запуск бэктеста">
+          <label className="field"><span>Рынок</span><select value={form.market_type} onChange={(e) => setForm({ ...form, market_type: e.target.value as 'spot' | 'futures' })}><option value="spot">Спот</option><option value="futures">Фьючерсы</option></select></label>
+          <label className="field"><span>Инструмент</span><select value={form.symbol} onChange={(e) => setForm({ ...form, symbol: e.target.value })}>{(availableSymbols.length ? availableSymbols : ['BTCUSDT']).map((symbol) => <option key={symbol} value={symbol}>{symbol}</option>)}</select></label>
+          <label className="field"><span>Таймфрейм</span><select value={form.timeframe} onChange={(e) => setForm({ ...form, timeframe: e.target.value })}><option value="15M">15M</option><option value="1H">1H</option><option value="4H">4H</option><option value="1D">1D</option></select></label>
+          <label className="field"><span>Свечей</span><input type="number" value={form.candles} onChange={(e) => setForm({ ...form, candles: Number(e.target.value) })} /></label>
+          <label className="field"><span>Стартовый баланс</span><input type="number" value={form.start_balance} onChange={(e) => setForm({ ...form, start_balance: Number(e.target.value) })} /></label>
+          <label className="field"><span>Политика направлений</span><select value={form.side_policy} onChange={(e) => setForm({ ...form, side_policy: e.target.value as 'both' | 'long_only' | 'short_only' })}><option value="both">Обе стороны</option><option value="long_only">Только лонг</option><option value="short_only">Только шорт</option></select></label>
+          <div className="action-row"><button onClick={run}>Запустить бэктест</button></div>
           {message ? <p className="message-block">{message}</p> : null}
         </Card>
-        <Card title="Selected run">
-          {!selectedRun ? <p>No run selected.</p> : (
+        <Card title="Выбранный прогон">
+          {!selectedRun ? <p>Прогон не выбран.</p> : (
             <>
-              <p><strong>#{selectedRun.id} {selectedRun.symbol}</strong> · {selectedRun.market_type}</p>
-              <p>Trades {selectedRun.closed_trades} · Win rate {selectedRun.win_rate.toFixed(2)}%</p>
-              <p>PnL {selectedRun.realized_pnl.toFixed(4)} · PF {selectedRun.profit_factor.toFixed(4)} · Avg RR {selectedRun.average_rr.toFixed(4)}</p>
-              <p>Max drawdown {selectedRun.max_drawdown.toFixed(2)}% · Target metrics {selectedRun.target_metrics_met ? 'met' : 'not met'}</p>
+              <p><strong>#{selectedRun.id} {selectedRun.symbol}</strong> · {t(selectedRun.market_type)}</p>
+              <p>Сделок: {selectedRun.closed_trades} · Win rate: {selectedRun.win_rate.toFixed(2)}%</p>
+              <p>PnL: {selectedRun.realized_pnl.toFixed(4)} · PF: {selectedRun.profit_factor.toFixed(4)} · Ср. R/R: {selectedRun.average_rr.toFixed(4)}</p>
+              <p>Макс. просадка: {selectedRun.max_drawdown.toFixed(2)}% · Целевые метрики: {selectedRun.target_metrics_met ? 'выполнены' : 'не выполнены'}</p>
               <p>{selectedRun.notes}</p>
             </>
           )}
         </Card>
       </div>
       <div className="card-grid two-columns">
-        <Card title="Backtest runs">
+        <Card title="Прогоны бэктеста">
           <div className="table-wrap">
             <table>
               <thead>
-                <tr><th>ID</th><th>Symbol</th><th>Trades</th><th>Win rate</th><th>PnL</th><th></th></tr>
+                <tr><th>ID</th><th>Инструмент</th><th>Сделок</th><th>Win rate</th><th>PnL</th><th></th></tr>
               </thead>
               <tbody>
                 {runs.map((item) => (
@@ -86,32 +87,32 @@ export default function BacktestsPage() {
                     <td>{item.closed_trades}</td>
                     <td>{item.win_rate.toFixed(2)}%</td>
                     <td>{item.realized_pnl.toFixed(4)}</td>
-                    <td><button onClick={() => openRun(item.id)}>Open</button></td>
+                    <td><button onClick={() => openRun(item.id)}>Открыть</button></td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         </Card>
-        <Card title="Run trades">
-          {!selectedRun ? <p>Select a run.</p> : (
+        <Card title="Сделки прогона">
+          {!selectedRun ? <p>Выберите прогон.</p> : (
             <div className="table-wrap">
               <table>
                 <thead>
-                  <tr><th>ID</th><th>Dir</th><th>Entry idx</th><th>Exit idx</th><th>Entry</th><th>Exit</th><th>PnL</th><th>RR</th><th>Reason</th></tr>
+                  <tr><th>ID</th><th>Напр.</th><th>Индекс входа</th><th>Индекс выхода</th><th>Вход</th><th>Выход</th><th>PnL</th><th>R/R</th><th>Причина</th></tr>
                 </thead>
                 <tbody>
                   {selectedRun.trades.map((trade) => (
                     <tr key={trade.id}>
                       <td>{trade.id}</td>
-                      <td>{trade.direction}</td>
+                      <td>{t(trade.direction)}</td>
                       <td>{trade.entry_index}</td>
                       <td>{trade.exit_index}</td>
                       <td>{trade.entry_price.toFixed(4)}</td>
                       <td>{trade.exit_price.toFixed(4)}</td>
                       <td>{trade.realized_pnl.toFixed(4)}</td>
                       <td>{trade.rr_multiple.toFixed(2)}</td>
-                      <td>{trade.close_reason}</td>
+                      <td>{t(trade.close_reason)}</td>
                     </tr>
                   ))}
                 </tbody>

@@ -1,15 +1,16 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api'
 import { Card, MiniLineChart, Page } from '../components'
+import { formatMapKey } from '../format'
 import type { AnalyticsOverview } from '../types'
 
 function renderMap(map: Record<string, number>) {
   const items = Object.entries(map)
-  if (items.length === 0) return <p>No data yet.</p>
+  if (items.length === 0) return <p>Данных пока нет.</p>
   return (
     <ul>
       {items.map(([key, value]) => (
-        <li key={key}>{key}: {typeof value === 'number' ? value.toFixed(4) : value}</li>
+        <li key={key}>{formatMapKey(key)}: {typeof value === 'number' ? value.toFixed(4) : value}</li>
       ))}
     </ul>
   )
@@ -23,39 +24,39 @@ export default function AnalyticsPage() {
   }, [])
 
   return (
-    <Page title="Analytics" subtitle="Extended trading analytics with lifecycle-aware buckets, streaks and compliance tracking.">
+    <Page title="Аналитика" subtitle="Расширенная торговая аналитика с учётом жизненного цикла сделок, серий и соблюдения стратегии.">
       <div className="card-grid four-columns">
-        <Card title="Trades"><strong>{analytics?.total_trades ?? 0}</strong></Card>
-        <Card title="Closed"><strong>{analytics?.closed_trades ?? 0}</strong></Card>
-        <Card title="Profit factor"><strong>{analytics?.profit_factor?.toFixed(4) ?? '0.0000'}</strong></Card>
-        <Card title="Average R/R"><strong>{analytics?.average_rr?.toFixed(4) ?? '0.0000'}</strong></Card>
+        <Card title="Сделки"><strong>{analytics?.total_trades ?? 0}</strong></Card>
+        <Card title="Закрыто"><strong>{analytics?.closed_trades ?? 0}</strong></Card>
+        <Card title="Profit Factor"><strong>{analytics?.profit_factor?.toFixed(4) ?? '0.0000'}</strong></Card>
+        <Card title="Средний R/R"><strong>{analytics?.average_rr?.toFixed(4) ?? '0.0000'}</strong></Card>
       </div>
       <div className="card-grid four-columns">
-        <Card title="Max drawdown"><strong>{analytics?.max_drawdown?.toFixed(2) ?? '0.00'}%</strong></Card>
-        <Card title="Avg hold"><strong>{analytics?.average_hold_minutes?.toFixed(2) ?? '0.00'}m</strong></Card>
-        <Card title="Avg compliance"><strong>{analytics?.average_compliance_score?.toFixed(2) ?? '0.00'}</strong></Card>
-        <Card title="Streaks"><strong>W {analytics?.streaks?.max_win_streak ?? 0} / L {analytics?.streaks?.max_loss_streak ?? 0}</strong></Card>
+        <Card title="Максимальная просадка"><strong>{analytics?.max_drawdown?.toFixed(2) ?? '0.00'}%</strong></Card>
+        <Card title="Среднее удержание"><strong>{analytics?.average_hold_minutes?.toFixed(2) ?? '0.00'} мин</strong></Card>
+        <Card title="Среднее соблюдение"><strong>{analytics?.average_compliance_score?.toFixed(2) ?? '0.00'}</strong></Card>
+        <Card title="Серии"><strong>W {analytics?.streaks?.max_win_streak ?? 0} / L {analytics?.streaks?.max_loss_streak ?? 0}</strong></Card>
       </div>
       <div className="card-grid three-columns">
-        <Card title="By mode">{renderMap(analytics?.by_mode ?? {})}</Card>
-        <Card title="By market">{renderMap(analytics?.by_market ?? {})}</Card>
-        <Card title="By symbol">{renderMap(analytics?.by_symbol ?? {})}</Card>
+        <Card title="По режиму">{renderMap(analytics?.by_mode ?? {})}</Card>
+        <Card title="По рынку">{renderMap(analytics?.by_market ?? {})}</Card>
+        <Card title="По инструменту">{renderMap(analytics?.by_symbol ?? {})}</Card>
       </div>
       <div className="card-grid three-columns">
-        <Card title="By direction">{renderMap(analytics?.by_direction ?? {})}</Card>
-        <Card title="By close reason">{renderMap(analytics?.by_close_reason ?? {})}</Card>
-        <Card title="TP distribution">{renderMap(analytics?.tp_hit_distribution ?? {})}</Card>
+        <Card title="По направлению">{renderMap(analytics?.by_direction ?? {})}</Card>
+        <Card title="По причине закрытия">{renderMap(analytics?.by_close_reason ?? {})}</Card>
+        <Card title="Распределение TP">{renderMap(analytics?.tp_hit_distribution ?? {})}</Card>
       </div>
       <div className="card-grid two-columns">
-        <Card title="Monthly PnL">{renderMap(analytics?.monthly_pnl ?? {})}</Card>
-        <Card title="Yearly PnL">{renderMap(analytics?.yearly_pnl ?? {})}</Card>
+        <Card title="PnL по месяцам">{renderMap(analytics?.monthly_pnl ?? {})}</Card>
+        <Card title="PnL по годам">{renderMap(analytics?.yearly_pnl ?? {})}</Card>
       </div>
       <div className="card-grid two-columns">
-        <Card title="By weekday">{renderMap(analytics?.by_weekday ?? {})}</Card>
-        <Card title="By hour">{renderMap(analytics?.by_hour ?? {})}</Card>
+        <Card title="По дням недели">{renderMap(analytics?.by_weekday ?? {})}</Card>
+        <Card title="По часам">{renderMap(analytics?.by_hour ?? {})}</Card>
       </div>
       <div className="card-grid single-column">
-        <Card title="Equity curve preview">
+        <Card title="Кривая капитала">
           <MiniLineChart points={analytics?.recent_equity_curve ?? []} />
         </Card>
       </div>

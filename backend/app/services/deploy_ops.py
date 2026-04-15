@@ -44,16 +44,16 @@ class DeploymentOpsService:
 
         database_scheme = urlparse(self.settings.database_url).scheme or 'unknown'
         redis_scheme = urlparse(self.settings.redis_url).scheme or 'unknown'
-        add('database_url', 'ok' if bool(self.settings.database_url) else 'error', f'Database scheme: {database_scheme}')
-        add('redis_url', 'ok' if bool(self.settings.redis_url) else 'error', f'Redis scheme: {redis_scheme}')
+        add('database_url', 'ok' if bool(self.settings.database_url) else 'error', f'Схема БД: {database_scheme}')
+        add('redis_url', 'ok' if bool(self.settings.redis_url) else 'error', f'Схема Redis: {redis_scheme}')
         add('secret_key', 'warning' if self.settings.secret_key == 'change-me' else 'ok', 'SECRET_KEY must be changed for production.' if self.settings.secret_key == 'change-me' else 'SECRET_KEY is customized.')
-        add('bybit_credentials', 'ok' if (self.settings.bybit_api_key and self.settings.bybit_api_secret) else 'warning', 'Bybit keys configured.' if (self.settings.bybit_api_key and self.settings.bybit_api_secret) else 'Bybit keys are not configured.')
-        add('deepseek', 'ok' if bool(self.settings.deepseek_api_key) else 'warning', 'DeepSeek API key configured.' if self.settings.deepseek_api_key else 'DeepSeek API key is not configured.')
-        add('cloudflare_tunnel', 'ok' if bool(self.settings.cloudflare_tunnel_token) else 'warning', 'Cloudflare Tunnel token configured.' if self.settings.cloudflare_tunnel_token else 'Cloudflare Tunnel token is not configured.')
-        add('public_base_url', 'ok' if bool(self.settings.public_base_url) else 'warning', 'Public base URL configured.' if self.settings.public_base_url else 'PUBLIC_BASE_URL is empty.')
+        add('bybit_credentials', 'ok' if (self.settings.bybit_api_key and self.settings.bybit_api_secret) else 'warning', 'Ключи Bybit настроены.' if (self.settings.bybit_api_key and self.settings.bybit_api_secret) else 'Ключи Bybit не настроены.')
+        add('deepseek', 'ok' if bool(self.settings.deepseek_api_key) else 'warning', 'Ключ DeepSeek настроен.' if self.settings.deepseek_api_key else 'Ключ DeepSeek не настроен.')
+        add('cloudflare_tunnel', 'ok' if bool(self.settings.cloudflare_tunnel_token) else 'warning', 'Токен Cloudflare Tunnel настроен.' if self.settings.cloudflare_tunnel_token else 'Токен Cloudflare Tunnel не настроен.')
+        add('public_base_url', 'ok' if bool(self.settings.public_base_url) else 'warning', 'Публичный base URL настроен.' if self.settings.public_base_url else 'Переменная PUBLIC_BASE_URL пуста.')
         add('backup_root', 'ok' if os.access(backup_root, os.W_OK) else 'error', f'Backup root: {backup_root}')
         add('release_root', 'ok' if os.access(release_root, os.W_OK) else 'error', f'Release root: {release_root}')
-        add('codex_session_dir', 'ok' if codex_root.exists() else 'error', f'Codex session dir: {codex_root}')
+        add('codex_session_dir', 'ok' if codex_root.exists() else 'error', f'Каталог сессий Codex: {codex_root}')
 
         overall = 'ok'
         if any(item['status'] == 'error' for item in checks):
@@ -105,7 +105,7 @@ class DeploymentOpsService:
                 warnings.append('Trading is paused.')
                 score -= 5
             if state_summary['kill_switch_armed']:
-                critical_issues.append('Kill switch is armed.')
+                critical_issues.append('Kill switch взведён.')
                 score -= 15
             if state_summary['last_live_sync_status'] == 'failed':
                 critical_issues.append(f"Last live sync failed: {state_summary['last_live_sync_message']}")

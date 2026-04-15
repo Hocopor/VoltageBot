@@ -1,3 +1,10 @@
+export type AuthSession = {
+  authenticated: boolean
+  username?: string | null
+  expires_at?: string | null
+  message?: string | null
+}
+
 export type RuntimeSettings = {
   mode: 'live' | 'paper' | 'historical'
   spot_enabled: boolean

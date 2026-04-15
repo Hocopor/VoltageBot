@@ -22,15 +22,15 @@ export default function PairsPage() {
   const save = async () => {
     const result = await api.saveSelections(selections)
     setSelections(result)
-    setMessage('Selections saved')
+    setMessage('Выбранные пары сохранены.')
   }
 
   return (
-    <Page title="Trading pairs" subtitle="Separate symbol selection for spot and futures USDT markets.">
+    <Page title="Торговые пары" subtitle="Отдельный выбор инструментов для спота и фьючерсов на USDT.">
       <div className="card-grid two-columns">
-        <Card title="Spot symbols">
+        <Card title="Спот-пары">
           <div className="list-box">
-            {spotPairs.slice(0, 40).map((item) => (
+            {spotPairs.slice(0, 60).map((item) => (
               <label key={item.symbol} className="checkbox-row">
                 <input type="checkbox" checked={selections.spot_symbols.includes(item.symbol)} onChange={() => setSelections((prev) => ({ ...prev, spot_symbols: toggleValue(prev.spot_symbols, item.symbol) }))} />
                 <span>{item.symbol}</span>
@@ -38,9 +38,9 @@ export default function PairsPage() {
             ))}
           </div>
         </Card>
-        <Card title="Futures symbols">
+        <Card title="Фьючерсные пары">
           <div className="list-box">
-            {futuresPairs.slice(0, 40).map((item) => (
+            {futuresPairs.slice(0, 60).map((item) => (
               <label key={item.symbol} className="checkbox-row">
                 <input type="checkbox" checked={selections.futures_symbols.includes(item.symbol)} onChange={() => setSelections((prev) => ({ ...prev, futures_symbols: toggleValue(prev.futures_symbols, item.symbol) }))} />
                 <span>{item.symbol}</span>
@@ -50,7 +50,7 @@ export default function PairsPage() {
         </Card>
       </div>
       <div className="action-row">
-        <button onClick={save}>Save selections</button>
+        <button onClick={save}>Сохранить выбор</button>
         {message ? <span className="message">{message}</span> : null}
       </div>
     </Page>

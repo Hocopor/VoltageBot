@@ -1,18 +1,8 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api'
 import { Card, Page } from '../components'
-import type {
-  BackupArtifact,
-  BackupManifest,
-  FlattenLiveResult,
-  FlattenPaperResult,
-  FlattenRun,
-  PreflightStatus,
-  ReconcileRun,
-  RecoveryRun,
-  ReleaseReadiness,
-  SystemState,
-} from '../types'
+import { formatDateTime, t, yesNo } from '../format'
+import type { BackupArtifact, BackupManifest, FlattenLiveResult, FlattenPaperResult, FlattenRun, PreflightStatus, ReconcileRun, RecoveryRun, ReleaseReadiness, SystemState } from '../types'
 
 const defaultState: SystemState = {
   maintenance_mode: false,
@@ -76,13 +66,7 @@ export default function OperationsPage() {
 
   const load = async () => {
     const [s, pf, ready, history, recoveryHistory, flattenHistory, backupArtifacts] = await Promise.all([
-      api.getOpsState(),
-      api.getPreflight(),
-      api.getReleaseReadiness(),
-      api.getReconcileRuns(),
-      api.getRecoveryRuns(),
-      api.getFlattenRuns(),
-      api.getBackupArtifacts(),
+      api.getOpsState(), api.getPreflight(), api.getReleaseReadiness(), api.getReconcileRuns(), api.getRecoveryRuns(), api.getFlattenRuns(), api.getBackupArtifacts(),
     ])
     setState(s)
     setPreflight(pf)
@@ -100,215 +84,98 @@ export default function OperationsPage() {
   const saveControls = async () => {
     try {
       setState(await api.updateOpsState(state))
-      setMessage('Operations controls saved')
+      setMessage('Операционные флаги сохранены.')
       setReadiness(await api.getReleaseReadiness())
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : String(error))
-    }
+    } catch (error) { setMessage(error instanceof Error ? error.message : String(error)) }
   }
-
-  const reconcile = async () => {
-    try {
-      const run = await api.reconcileLive()
-      setMessage(`Live reconcile #${run.id}: ${run.summary ?? run.status}`)
-      await load()
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : String(error))
-    }
-  }
-
-  const recover = async () => {
-    try {
-      const run = await api.runRecovery()
-      setMessage(`Recovery #${run.id}: ${run.summary ?? run.status}`)
-      await load()
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : String(error))
-    }
-  }
-
-  const flattenPaper = async () => {
-    try {
-      const result = await api.flattenPaper()
-      setFlattenResult(result)
-      setMessage(`Flattened ${result.closed_positions} paper positions`)
-      await load()
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : String(error))
-    }
-  }
-
-  const flattenLive = async (armKillSwitch: boolean) => {
-    try {
-      const result = armKillSwitch ? await api.flattenLiveKillSwitch() : await api.flattenLive()
-      setLiveFlatten(result)
-      setMessage(`Live flatten run #${result.run_id}: ${result.summary ?? result.status}`)
-      await load()
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : String(error))
-    }
-  }
-
-  const createManifest = async () => {
-    try {
-      const next = await api.createBackupManifest()
-      setManifest(next)
-      setMessage(`Manifest created: ${next.name}`)
-      await load()
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : String(error))
-    }
-  }
+  const reconcile = async () => { try { const run = await api.reconcileLive(); setMessage(`Reconcile #${run.id}: ${run.summary ?? run.status}`); await load() } catch (error) { setMessage(error instanceof Error ? error.message : String(error)) } }
+  const recover = async () => { try { const run = await api.runRecovery(); setMessage(`Recovery #${run.id}: ${run.summary ?? run.status}`); await load() } catch (error) { setMessage(error instanceof Error ? error.message : String(error)) } }
+  const flattenPaper = async () => { try { const result = await api.flattenPaper(); setFlattenResult(result); setMessage(`Paper-позиций закрыто: ${result.closed_positions}`); await load() } catch (error) { setMessage(error instanceof Error ? error.message : String(error)) } }
+  const flattenLive = async (armKillSwitch: boolean) => { try { const result = armKillSwitch ? await api.flattenLiveKillSwitch() : await api.flattenLive(); setLiveFlatten(result); setMessage(`Live flatten #${result.run_id}: ${result.summary ?? result.status}`); await load() } catch (error) { setMessage(error instanceof Error ? error.message : String(error)) } }
+  const createManifest = async () => { try { const next = await api.createBackupManifest(); setManifest(next); setMessage(`Manifest создан: ${next.name}`); await load() } catch (error) { setMessage(error instanceof Error ? error.message : String(error)) } }
 
   return (
-    <Page title="Operations" subtitle="Production controls, readiness, backups, recovery workflows and live account safety state.">
+    <Page title="Операции" subtitle="Production-контроль, readiness, резервные копии, recovery и безопасность live-аккаунта.">
       <div className="card-grid four-columns">
-        <Card title="System state">
-          <p>Boot count: <strong>{state.boot_count}</strong></p>
-          <p>Last startup: {state.last_startup_at ?? 'n/a'}</p>
-          <p>Last shutdown: {state.last_shutdown_at ?? 'n/a'}</p>
-          <p>Last reconcile: {state.last_reconcile_at ?? 'n/a'}</p>
-          <p>Last lifecycle sync: {state.last_lifecycle_sync_at ?? 'n/a'}</p>
-          <p>Last recovery: {state.last_recovery_at ?? 'n/a'}</p>
+        <Card title="Состояние системы">
+          <p>Перезапусков: <strong>{state.boot_count}</strong></p>
+          <p>Последний старт: {formatDateTime(state.last_startup_at)}</p>
+          <p>Последний shutdown: {formatDateTime(state.last_shutdown_at)}</p>
+          <p>Последний reconcile: {formatDateTime(state.last_reconcile_at)}</p>
+          <p>Последний lifecycle sync: {formatDateTime(state.last_lifecycle_sync_at)}</p>
+          <p>Последнее recovery: {formatDateTime(state.last_recovery_at)}</p>
         </Card>
-        <Card title="Open positions">
-          <p>Total: <strong>{state.open_positions}</strong></p>
+        <Card title="Открытые позиции">
+          <p>Всего: <strong>{state.open_positions}</strong></p>
           <p>Live: {state.open_live_positions}</p>
           <p>Paper: {state.open_paper_positions}</p>
-          {flattenResult ? <p>Last paper flatten: {flattenResult.closed_positions}</p> : null}
-          {liveFlatten ? <p>Last live flatten submissions: {liveFlatten.close_orders_submitted}</p> : null}
+          {flattenResult ? <p>Последний paper flatten: {flattenResult.closed_positions}</p> : null}
+          {liveFlatten ? <p>Последний live flatten: {liveFlatten.close_orders_submitted}</p> : null}
         </Card>
         <Card title="Preflight">
-          <p>Status: <strong>{preflight.overall_status}</strong></p>
-          <p>Environment: {preflight.environment}</p>
-          <p>DB: {preflight.database_scheme}</p>
+          <p>Статус: <strong>{t(preflight.overall_status)}</strong></p>
+          <p>Окружение: {preflight.environment}</p>
+          <p>БД: {preflight.database_scheme}</p>
           <p>Redis: {preflight.redis_scheme}</p>
-          <p>Cloudflare: {preflight.cloudflare_configured ? 'configured' : 'not configured'}</p>
+          <p>Cloudflare: {preflight.cloudflare_configured ? 'настроен' : 'не настроен'}</p>
         </Card>
-        <Card title="Release readiness">
-          <p>Score: <strong>{readiness.score}</strong></p>
-          <p>Paper ready: {readiness.ready_for_paper ? 'yes' : 'no'}</p>
-          <p>Live ready: {readiness.ready_for_live ? 'yes' : 'no'}</p>
-          <p>Critical: {readiness.critical_issues.length}</p>
-          <p>Warnings: {readiness.warnings.length}</p>
+        <Card title="Готовность к релизу">
+          <p>Оценка: <strong>{readiness.score}</strong></p>
+          <p>Готов к paper: {yesNo(readiness.ready_for_paper)}</p>
+          <p>Готов к live: {yesNo(readiness.ready_for_live)}</p>
+          <p>Критичных: {readiness.critical_issues.length}</p>
+          <p>Предупреждений: {readiness.warnings.length}</p>
         </Card>
       </div>
 
       <div className="card-grid two-columns">
-        <Card title="Controls">
+        <Card title="Управление">
           {message ? <p className="message-block">{message}</p> : null}
-          <label><input type="checkbox" checked={state.maintenance_mode} onChange={(e) => setState({ ...state, maintenance_mode: e.target.checked })} /> Maintenance</label>
-          <label><input type="checkbox" checked={state.trading_paused} onChange={(e) => setState({ ...state, trading_paused: e.target.checked })} /> Pause trading</label>
-          <label><input type="checkbox" checked={state.kill_switch_armed} onChange={(e) => setState({ ...state, kill_switch_armed: e.target.checked })} /> Kill switch</label>
-          <div className="actions-row">
-            <button onClick={saveControls}>Save</button>
+          <label className="checkbox-row"><input type="checkbox" checked={state.maintenance_mode} onChange={(e) => setState({ ...state, maintenance_mode: e.target.checked })} /><span>Maintenance mode</span></label>
+          <label className="checkbox-row"><input type="checkbox" checked={state.trading_paused} onChange={(e) => setState({ ...state, trading_paused: e.target.checked })} /><span>Пауза торговли</span></label>
+          <label className="checkbox-row"><input type="checkbox" checked={state.kill_switch_armed} onChange={(e) => setState({ ...state, kill_switch_armed: e.target.checked })} /><span>Kill switch</span></label>
+          <div className="action-row">
+            <button onClick={saveControls}>Сохранить</button>
             <button onClick={reconcile}>Reconcile live</button>
-            <button onClick={recover}>Run recovery</button>
+            <button onClick={recover}>Запустить recovery</button>
             <button onClick={flattenPaper}>Flatten paper</button>
           </div>
-          <div className="actions-row" style={{ marginTop: 8 }}>
+          <div className="action-row">
             <button onClick={() => flattenLive(false)}>Flatten live</button>
-            <button onClick={() => flattenLive(true)}>Flatten live + arm kill switch</button>
-            <button onClick={createManifest}>Create manifest</button>
+            <button onClick={() => flattenLive(true)}>Flatten live + kill switch</button>
+            <button onClick={createManifest}>Создать manifest</button>
           </div>
-          {manifest ? <p>Latest manifest: {manifest.name}</p> : null}
+          {manifest ? <p>Последний manifest: {manifest.name}</p> : null}
         </Card>
-        <Card title="Readiness blockers">
-          <p><strong>Critical issues</strong></p>
-          {readiness.critical_issues.length === 0 ? <p>None.</p> : <ul>{readiness.critical_issues.map((item) => <li key={item}>{item}</li>)}</ul>}
-          <p><strong>Warnings</strong></p>
-          {readiness.warnings.length === 0 ? <p>None.</p> : <ul>{readiness.warnings.map((item) => <li key={item}>{item}</li>)}</ul>}
+        <Card title="Блокирующие факторы">
+          <p><strong>Критичные проблемы</strong></p>
+          {readiness.critical_issues.length === 0 ? <p>Нет.</p> : <ul>{readiness.critical_issues.map((item) => <li key={item}>{item}</li>)}</ul>}
+          <p><strong>Предупреждения</strong></p>
+          {readiness.warnings.length === 0 ? <p>Нет.</p> : <ul>{readiness.warnings.map((item) => <li key={item}>{item}</li>)}</ul>}
         </Card>
       </div>
 
       <div className="card-grid three-columns">
-        <Card title="Preflight checks">
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr><th>Name</th><th>Status</th><th>Message</th></tr>
-              </thead>
-              <tbody>
-                {preflight.checks.map((item) => (
-                  <tr key={item.name}><td>{item.name}</td><td>{item.status}</td><td>{item.message}</td></tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        <Card title="Проверки preflight">
+          <div className="table-wrap"><table><thead><tr><th>Название</th><th>Статус</th><th>Сообщение</th></tr></thead><tbody>{preflight.checks.map((item) => <tr key={item.name}><td>{item.name}</td><td>{t(item.status)}</td><td>{item.message}</td></tr>)}</tbody></table></div>
         </Card>
-        <Card title="Readiness counts">
-          <p>Orders: <strong>{readiness.counts.orders}</strong></p>
-          <p>Trades: {readiness.counts.trades}</p>
-          <p>Positions: {readiness.counts.positions}</p>
-          <p>Journal entries: {readiness.counts.journal_entries}</p>
-          <p>Backup root: {preflight.backup_root || 'n/a'}</p>
-          <p>Release root: {preflight.release_root || 'n/a'}</p>
+        <Card title="Счётчики readiness">
+          <p>Ордера: <strong>{readiness.counts.orders}</strong></p>
+          <p>Сделки: {readiness.counts.trades}</p>
+          <p>Позиции: {readiness.counts.positions}</p>
+          <p>Записи дневника: {readiness.counts.journal_entries}</p>
+          <p>Папка backups: {preflight.backup_root || '—'}</p>
+          <p>Папка releases: {preflight.release_root || '—'}</p>
         </Card>
-        <Card title="Backup artifacts">
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr><th>Name</th><th>Kind</th><th>Size</th></tr>
-              </thead>
-              <tbody>
-                {backups.slice(0, 8).map((item) => (
-                  <tr key={item.path}><td>{item.name}</td><td>{item.kind}</td><td>{item.size_bytes}</td></tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        <Card title="Резервные копии">
+          <div className="table-wrap"><table><thead><tr><th>Имя</th><th>Тип</th><th>Размер</th></tr></thead><tbody>{backups.slice(0, 8).map((item) => <tr key={item.path}><td>{item.name}</td><td>{item.kind}</td><td>{item.size_bytes}</td></tr>)}</tbody></table></div>
         </Card>
       </div>
 
       <div className="card-grid three-columns">
-        <Card title="Reconcile history">
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr><th>ID</th><th>Status</th><th>Balances</th><th>Orders</th><th>Positions</th><th>Closed local</th></tr>
-              </thead>
-              <tbody>
-                {runs.map((run) => (
-                  <tr key={run.id}>
-                    <td>{run.id}</td><td>{run.status}</td><td>{run.balances_synced}</td><td>{run.orders_seen}</td><td>{run.positions_seen}</td><td>{run.closed_local_positions}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-        <Card title="Recovery history">
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr><th>ID</th><th>Context</th><th>Status</th><th>Stale bot runs</th><th>Recovered positions</th></tr>
-              </thead>
-              <tbody>
-                {recoveryRuns.map((run) => (
-                  <tr key={run.id}>
-                    <td>{run.id}</td><td>{run.startup_context}</td><td>{run.status}</td><td>{run.stale_bot_runs}</td><td>{run.recovered_positions}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
-        <Card title="Flatten history">
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr><th>ID</th><th>Status</th><th>Cancelled</th><th>Close orders</th><th>Symbols</th></tr>
-              </thead>
-              <tbody>
-                {flattenRuns.map((run) => (
-                  <tr key={run.id}>
-                    <td>{run.id}</td><td>{run.status}</td><td>{run.orders_cancelled}</td><td>{run.close_orders_submitted}</td><td>{run.symbols_touched}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
+        <Card title="История reconcile"><div className="table-wrap"><table><thead><tr><th>ID</th><th>Статус</th><th>Балансы</th><th>Ордера</th><th>Позиции</th><th>Создано</th></tr></thead><tbody>{runs.map((item) => <tr key={item.id}><td>{item.id}</td><td>{t(item.status)}</td><td>{item.balances_synced}</td><td>{item.orders_seen}</td><td>{item.positions_seen}</td><td>{formatDateTime(item.created_at)}</td></tr>)}</tbody></table></div></Card>
+        <Card title="История recovery"><div className="table-wrap"><table><thead><tr><th>ID</th><th>Статус</th><th>Stale runs</th><th>Позиций</th><th>Создано</th></tr></thead><tbody>{recoveryRuns.map((item) => <tr key={item.id}><td>{item.id}</td><td>{t(item.status)}</td><td>{item.stale_bot_runs}</td><td>{item.recovered_positions}</td><td>{formatDateTime(item.created_at)}</td></tr>)}</tbody></table></div></Card>
+        <Card title="История flatten"><div className="table-wrap"><table><thead><tr><th>ID</th><th>Режим</th><th>Scope</th><th>Статус</th><th>Close orders</th><th>Создано</th></tr></thead><tbody>{flattenRuns.map((item) => <tr key={item.id}><td>{item.id}</td><td>{t(item.mode)}</td><td>{item.scope}</td><td>{t(item.status)}</td><td>{item.close_orders_submitted}</td><td>{formatDateTime(item.created_at)}</td></tr>)}</tbody></table></div></Card>
       </div>
     </Page>
   )

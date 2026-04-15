@@ -1,8 +1,9 @@
 import asyncio
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 import app.models
 from app.api.v1.router import api_router
@@ -10,6 +11,7 @@ from app.core.config import get_settings
 from app.db.base import Base
 from app.db.session import SessionLocal, engine
 from app.seed import seed_runtime_state
+from app.services.admin_auth import AdminAuthService
 from app.services.bot_runtime import bot_background_loop
 from app.services.deploy_ops import DeploymentOpsService
 from app.services.operations import OperationsService
@@ -51,6 +53,27 @@ app.add_middleware(
     allow_methods=['*'],
     allow_headers=['*'],
 )
+
+
+@app.middleware('http')
+async def authentication_middleware(request: Request, call_next):
+    path = request.url.path
+    if request.method == 'OPTIONS' or path == '/healthz':
+        return await call_next(request)
+
+    if path.startswith(settings.api_v1_prefix):
+        public_paths = {
+            f'{settings.api_v1_prefix}/auth/login',
+            f'{settings.api_v1_prefix}/auth/logout',
+            f'{settings.api_v1_prefix}/auth/session',
+        }
+        if path not in public_paths:
+            session = AdminAuthService().read_session(request.cookies.get(settings.auth_cookie_name))
+            if not session:
+                return JSONResponse(status_code=401, content={'detail': 'Требуется авторизация.'})
+            request.state.authenticated_user = session['username']
+
+    return await call_next(request)
 
 
 @app.get('/healthz', tags=['health'])

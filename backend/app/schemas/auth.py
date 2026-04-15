@@ -1,6 +1,18 @@
 from pydantic import BaseModel, Field
 
 
+class LoginRequest(BaseModel):
+    username: str = Field(min_length=1, max_length=120)
+    password: str = Field(min_length=1, max_length=512)
+
+
+class SessionStatusRead(BaseModel):
+    authenticated: bool
+    username: str | None = None
+    expires_at: str | None = None
+    message: str | None = None
+
+
 class CodexStatusRead(BaseModel):
     connected: bool
     mode: str

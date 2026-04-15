@@ -53,16 +53,16 @@ class ReleaseManagerService:
             checks.append({'name': name, 'status': status, 'message': message})
 
         add('preflight', preflight['overall_status'], f"Preflight status is {preflight['overall_status']}.")
-        add('paper-readiness', 'ok' if readiness['ready_for_paper'] else 'error', 'Paper/historical contour is ready.' if readiness['ready_for_paper'] else 'Paper/historical contour is not ready yet.')
-        add('live-readiness', 'ok' if readiness['ready_for_live'] else 'warning', 'Live contour can be enabled.' if readiness['ready_for_live'] else 'Live contour still has outstanding blockers or warnings.')
-        add('codex-persistence', 'ok' if codex_status.get('connected') else 'warning', 'Codex browser session is persisted.' if codex_status.get('connected') else 'Codex session is not connected yet.')
-        add('deepseek-config', 'ok' if deepseek_status.get('configured') else 'warning', 'DeepSeek key configured.' if deepseek_status.get('configured') else 'DeepSeek key is missing, fallback AI mode only.')
-        add('backups', 'ok' if backup_artifacts else 'warning', 'Backup artifacts or manifests already exist.' if backup_artifacts else 'No backup artifacts found yet.')
-        add('journal-data', 'ok' if journal_entries > 0 else 'warning', f'Journal entries available: {journal_entries}.')
-        add('bot-runtime', 'ok' if bot_runs > 0 else 'warning', f'Bot runs recorded: {bot_runs}.')
-        add('event-log', 'ok' if system_events > 0 else 'warning', f'System events recorded: {system_events}.')
-        add('kill-switch', 'error' if state['kill_switch_armed'] else 'ok', 'Kill switch is armed.' if state['kill_switch_armed'] else 'Kill switch is not armed.')
-        add('startup-integrity', 'ok' if state['boot_count'] > 0 and state['last_startup_at'] else 'warning', 'Startup markers present.' if state['boot_count'] > 0 and state['last_startup_at'] else 'Startup markers are incomplete.')
+        add('paper-readiness', 'ok' if readiness['ready_for_paper'] else 'error', 'Контур paper/historical готов.' if readiness['ready_for_paper'] else 'Контур paper/historical пока не готов.')
+        add('live-readiness', 'ok' if readiness['ready_for_live'] else 'warning', 'Live-контур можно включать.' if readiness['ready_for_live'] else 'Для live-контура ещё есть блокеры или предупреждения.')
+        add('codex-persistence', 'ok' if codex_status.get('connected') else 'warning', 'Сессия Codex сохранена.' if codex_status.get('connected') else 'Сессия Codex ещё не подключена.')
+        add('deepseek-config', 'ok' if deepseek_status.get('configured') else 'warning', 'Ключ DeepSeek настроен.' if deepseek_status.get('configured') else 'Ключ DeepSeek отсутствует, доступен только резервный AI-режим.')
+        add('backups', 'ok' if backup_artifacts else 'warning', 'Резервные копии или manifest-файлы уже существуют.' if backup_artifacts else 'Резервные копии пока не найдены.')
+        add('journal-data', 'ok' if journal_entries > 0 else 'warning', f'Доступно записей дневника: {journal_entries}.')
+        add('bot-runtime', 'ok' if bot_runs > 0 else 'warning', f'Сохранено запусков бота: {bot_runs}.')
+        add('event-log', 'ok' if system_events > 0 else 'warning', f'Сохранено системных событий: {system_events}.')
+        add('kill-switch', 'error' if state['kill_switch_armed'] else 'ok', 'Kill switch взведён.' if state['kill_switch_armed'] else 'Kill switch не взведён.')
+        add('startup-integrity', 'ok' if state['boot_count'] > 0 and state['last_startup_at'] else 'warning', 'Маркеры старта присутствуют.' if state['boot_count'] > 0 and state['last_startup_at'] else 'Маркеры старта неполные.')
 
         overall = 'ok'
         if any(item['status'] == 'error' for item in checks):
@@ -80,16 +80,16 @@ class ReleaseManagerService:
 
         next_actions: list[str] = []
         if state['kill_switch_armed']:
-            next_actions.append('Disarm kill switch only after verifying there are no unintended live positions or open emergency orders.')
+            next_actions.append('Снимайте kill switch только после проверки, что нет нежелательных live-позиций или аварийных ордеров.')
         if not codex_status.get('connected'):
-            next_actions.append('Complete Codex browser login and verify that the persisted session survives restart.')
+            next_actions.append('Завершите браузерный вход Codex и проверьте, что сессия переживает перезапуск.')
         if not deepseek_status.get('configured'):
-            next_actions.append('Add DEEPSEEK_API_KEY to .env to enable full AI review and explainability.')
+            next_actions.append('Добавьте DEEPSEEK_API_KEY в .env, чтобы включить полный AI-разбор и explainability.')
         if not backup_artifacts:
-            next_actions.append('Create at least one runtime backup manifest and one real backup artifact before first live deployment.')
+            next_actions.append('Перед первым live-запуском создайте хотя бы один runtime manifest и одну реальную резервную копию.')
         next_actions.extend(readiness['critical_issues'])
         if not next_actions:
-            next_actions.append('No critical blockers detected. Proceed with controlled paper validation, then limited live rollout.')
+            next_actions.append('Критических блокеров не обнаружено. Продолжайте контролируемую paper-валидацию, затем ограниченный live-rollout.')
 
         return {
             'generated_at': utcnow_iso(),
@@ -128,7 +128,7 @@ class ReleaseManagerService:
             'info',
             'release',
             'release-acceptance',
-            f"Release acceptance generated: {base_name}",
+            f"Сформирован релизный acceptance-отчёт: {base_name}",
             payload_json=json.dumps({'trigger': trigger, 'json_path': str(json_path), 'md_path': str(md_path), 'overall_status': report['overall_status']}),
         )
 

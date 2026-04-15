@@ -59,6 +59,6 @@ def list_decisions(db: Session = Depends(db_session)) -> list[StrategyDecisionRe
 async def explain_decision(decision_id: int, db: Session = Depends(db_session)) -> StrategyExplanationRead:
     decision = db.get(StrategyDecision, decision_id)
     if decision is None:
-        raise HTTPException(status_code=404, detail='Strategy decision not found')
+        raise HTTPException(status_code=404, detail='Решение стратегии не найдено.')
     status, explanation = await AIReviewService().explain_strategy_decision(decision)
     return StrategyExplanationRead(decision_id=decision.id, status=status, explanation=explanation)

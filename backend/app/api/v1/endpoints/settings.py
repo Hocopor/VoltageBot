@@ -12,7 +12,7 @@ router = APIRouter()
 def read_runtime_settings(db: Session = Depends(db_session)) -> RuntimeSettingsRead:
     settings = db.query(RuntimeSetting).order_by(RuntimeSetting.id.asc()).first()
     if not settings:
-        raise HTTPException(status_code=404, detail='Runtime settings not initialized')
+        raise HTTPException(status_code=404, detail='Настройки режима ещё не инициализированы.')
     return RuntimeSettingsRead(
         mode=settings.mode,
         spot_enabled=settings.spot_enabled,
