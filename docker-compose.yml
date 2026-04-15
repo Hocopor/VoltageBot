@@ -31,16 +31,14 @@ services:
         condition: service_started
     volumes:
       - codex_data:${CODEX_SESSION_DIR:-/data/codex}
-    ports:
-      - "8000:8000"
+
 
   web:
     build:
       context: ./frontend
     depends_on:
       - api
-    ports:
-      - "8080:80"
+
 
   cloudflared:
     image: cloudflare/cloudflared:latest
