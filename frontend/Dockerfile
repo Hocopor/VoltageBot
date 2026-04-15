@@ -1,7 +1,12 @@
-FROM node:22-alpine AS build
+FROM node:20-bookworm-slim AS build
 WORKDIR /app
-COPY package*.json ./
-RUN npm install
+
+COPY package.json package-lock.json ./
+RUN npm config set registry https://registry.npmjs.org/ \
+ && npm config set fund false \
+ && npm config set audit false \
+ && npm ci
+
 COPY . .
 RUN npm run build
 
