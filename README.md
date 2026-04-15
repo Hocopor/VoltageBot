@@ -1,5 +1,13 @@
 # VOLTAGE
 
+![Статус](https://img.shields.io/badge/status-production--oriented-0a7ea4)
+![Режимы](https://img.shields.io/badge/modes-live%20%7C%20paper%20%7C%20historical-6f42c1)
+![Биржа](https://img.shields.io/badge/exchange-Bybit%20Mainnet-f7a600)
+![Backend](https://img.shields.io/badge/backend-FastAPI-009688)
+![Frontend](https://img.shields.io/badge/frontend-React%20%2B%20Vite-61dafb)
+![Infra](https://img.shields.io/badge/deploy-Docker%20%2B%20Cloudflare%20Tunnel-ff6b6b)
+![Лицензия](https://img.shields.io/badge/license-private-informational)
+
 **VOLTAGE** — персональная production-oriented система для алгоритмической крипто-торговли на **Bybit Mainnet** с поддержкой:
 
 - **реальной торговли**
@@ -17,8 +25,9 @@
 
 ## Содержание
 
-- [Что умеет проект](#что-умеет-проект)
+- [Что это такое](#что-это-такое)
 - [Ключевые возможности](#ключевые-возможности)
+- [Скриншоты](#скриншоты)
 - [Торговые режимы](#торговые-режимы)
 - [Стратегия](#стратегия)
 - [Технологический стек](#технологический-стек)
@@ -30,15 +39,16 @@
 - [Переменные окружения](#переменные-окружения)
 - [Проверка работоспособности](#проверка-работоспособности)
 - [Операционные сценарии](#операционные-сценарии)
+- [FAQ / Частые проблемы](#faq--частые-проблемы)
 - [Статус готовности](#статус-готовности)
 - [Ограничения и важные замечания](#ограничения-и-важные-замечания)
 - [Документация в проекте](#документация-в-проекте)
 
 ---
 
-## Что умеет проект
+## Что это такое
 
-VOLTAGE объединяет в одном приложении:
+VOLTAGE — это единая система, которая объединяет:
 
 - подключение к **Bybit Mainnet**
 - получение рыночных данных
@@ -107,6 +117,42 @@ VOLTAGE объединяет в одном приложении:
 - recovery runs
 - flatten runs
 - release reports
+
+---
+
+## Скриншоты
+
+Ниже — рекомендуемый блок под реальные скриншоты из проекта.  
+Когда сделаешь скриншоты, просто положи их, например, в папку `docs/screenshots/` и замени пути.
+
+### Dashboard
+![Dashboard](docs/screenshots/dashboard.png)
+
+### Orders / Positions
+![Orders](docs/screenshots/orders.png)
+
+### Strategy
+![Strategy](docs/screenshots/strategy.png)
+
+### Backtests
+![Backtests](docs/screenshots/backtests.png)
+
+### Journal
+![Journal](docs/screenshots/journal.png)
+
+### Analytics
+![Analytics](docs/screenshots/analytics.png)
+
+### Operations
+![Operations](docs/screenshots/operations.png)
+
+### Integrations
+![Integrations](docs/screenshots/integrations.png)
+
+### Release
+![Release](docs/screenshots/release.png)
+
+> Если скриншоты пока не готовы, этот блок можно оставить как шаблон.
 
 ---
 
@@ -395,7 +441,7 @@ nano .env
 
 ### 4. Поднять стек
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+docker compose -p voltage -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 ```
 
 ### 5. Проверить backend
@@ -439,7 +485,7 @@ https://<ТВОЙ_ПОДДОМЕН>
 
 ### Production-команда
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+docker compose -p voltage -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 ```
 
 ### Скрипты проекта
@@ -498,7 +544,7 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 - `BACKUP_ROOT`
 - `RELEASE_ROOT`
 
-Для подробного описания каждой строки `.env` рекомендуется использовать отдельный env guide.
+Для подробного описания каждой строки `.env` лучше использовать отдельный env guide.
 
 ---
 
@@ -511,7 +557,7 @@ curl http://127.0.0.1:8000/healthz
 
 ### Compose config check
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.prod.yml config
+docker compose -p voltage -f docker-compose.yml -f docker-compose.prod.yml config
 ```
 
 ### Backend smoke-test
@@ -559,6 +605,74 @@ npm run build
 - закрытие live-позиций
 - постановка kill-switch
 - блокировка дальнейшего исполнения
+
+---
+
+## FAQ / Частые проблемы
+
+### 1. Контейнеры не стартуют после `docker compose up -d --build`
+Проверь:
+- заполнен ли `.env`
+- изменён ли `SECRET_KEY`
+- совпадают ли `DATABASE_URL` и `POSTGRES_*`
+- не пуст ли `CLOUDFLARE_TUNNEL_TOKEN`
+- не дублируются ли `ports` в базовом и prod compose
+
+Команды:
+```bash
+docker compose -p voltage -f docker-compose.yml -f docker-compose.prod.yml ps
+docker compose -p voltage -f docker-compose.yml -f docker-compose.prod.yml logs -f --tail=200
+```
+
+### 2. Почему `8000/tcp` у другого контейнера не значит конфликт?
+`8000/tcp` означает только внутренний порт контейнера.  
+Конфликт есть только если порт опубликован на хост как:
+- `127.0.0.1:8000->...`
+- `0.0.0.0:8000->...`
+
+### 3. Что указывать в Cloudflare Tunnel → Service URL?
+Для текущего Docker Compose стека:
+```text
+http://web:80
+```
+
+### 4. Что писать в `ALLOWED_ORIGINS`?
+Не `http://web:80`, а реальный origin браузера, например:
+```env
+ALLOWED_ORIGINS=["https://voltage.example.com"]
+```
+
+### 5. Нужно ли сразу включать live?
+Нет. Рекомендуемый путь:
+**historical → paper → limited live → full live**
+
+### 6. Почему DeepSeek / Codex показывают не всё?
+Проверь:
+- `DEEPSEEK_API_KEY`
+- `CODEX_SESSION_DIR`
+- настройки Integrations page
+- browser-session flow для Codex
+
+### 7. Почему preflight или readiness ругаются?
+Обычно причины такие:
+- пустые критичные переменные `.env`
+- нет публичного `PUBLIC_BASE_URL`
+- не поднят backend
+- нет release/backups директорий
+- интеграции не настроены
+
+### 8. Почему backup/restore не работает?
+Проверь:
+- существуют ли `deploy/backups` и `deploy/releases`
+- доступна ли запись в bind-mounted директории
+- запущен ли backend для manifest generation
+
+### 9. Можно ли использовать проект без Cloudflare Tunnel?
+Да, для локального доступа и внутренней сети можно.  
+Но для удобного внешнего HTTPS-доступа Cloudflare Tunnel — рекомендуемый вариант.
+
+### 10. Можно ли использовать проект как SaaS для нескольких пользователей?
+Нет. Текущая архитектура — персональная, под одного владельца.
 
 ---
 
@@ -694,22 +808,22 @@ npm run build
 
 ### Поднять проект
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+docker compose -p voltage -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 ```
 
 ### Остановить проект
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.prod.yml down
+docker compose -p voltage -f docker-compose.yml -f docker-compose.prod.yml down
 ```
 
 ### Посмотреть контейнеры
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.prod.yml ps
+docker compose -p voltage -f docker-compose.yml -f docker-compose.prod.yml ps
 ```
 
 ### Посмотреть логи
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.prod.yml logs -f --tail=200
+docker compose -p voltage -f docker-compose.yml -f docker-compose.prod.yml logs -f --tail=200
 ```
 
 ### Проверить backend
